@@ -1,0 +1,287 @@
+<template>
+    <div>
+        <b-row>
+<!--            <b-col cols="12">-->
+<!--                <b-form-group-->
+<!--                    label="Frameworks"-->
+<!--                >-->
+<!--                    <x-tag-input :positionRelative="true" :removable="true" keyIndex="framework_id"-->
+<!--                                 :multiple="true" :value="form.frameworks" relation="framework"-->
+<!--                                 :resource="`/api/search/frameworks`" column="title" name="title"-->
+<!--                                 @input="onFrameworksUpdate">-->
+<!--                    </x-tag-input>-->
+<!--                    <error :error="error.frameworks"/>-->
+<!--                </b-form-group>-->
+<!--            </b-col>-->
+            <b-col md="6">
+                <b-form-group
+                    label="Name"
+                >
+                    <b-form-input
+                        placeholder="Name"
+                        v-model="form.name"
+                    />
+                    <error :error="error.name"/>
+                </b-form-group>
+            </b-col>
+
+            <b-col md="6">
+                <b-form-group
+                    label="Reference Code"
+                >
+                    <b-form-input
+                        placeholder="Reference Code"
+                        v-model="form.reference_code"
+                    />
+                    <error :error="error.reference_code"/>
+                </b-form-group>
+            </b-col>
+            <b-col md="12">
+                <b-form-group
+                    label="Description"
+                >
+                    <b-form-textarea
+                        v-model="form.desc"
+                    />
+                    <error :error="error.desc"/>
+                </b-form-group>
+            </b-col>
+<!--            <b-col cols="12">-->
+<!--                <div class="position-top-0 position-right-0 position-absolute px-1" @click="addNewControl">-->
+<!--                    <small>Add New</small>-->
+<!--                </div>-->
+<!--                <b-form-group-->
+<!--                    label="Controls"-->
+<!--                >-->
+<!--                    <x-tag-input :positionRelative="true" :removable="true" keyIndex="control_id"-->
+<!--                                 :multiple="true" :value="form.controls" relation="control"-->
+<!--                                 :resource="`/api/search/controls`" column="title" name="title"-->
+<!--                                 @input="onControlsUpdate">-->
+<!--                    </x-tag-input>-->
+<!--                    <error :error="error.controls"/>-->
+<!--                </b-form-group>-->
+<!--            </b-col>-->
+        </b-row>
+        <b-row>
+            <b-col>
+                <b-button
+
+                    type="submit"
+                    variant="primary"
+                    class="mr-1"
+                    @click="formSubmitted"
+                >
+                    Submit
+                </b-button>
+                <b-button
+                    v-ripple.400="'rgba(186, 191, 199, 0.15)'"
+                    type="reset"
+                    variant="outline-secondary"
+                    @click="cancelForm"
+                >
+                    Cancel
+                </b-button>
+            </b-col>
+        </b-row>
+
+<!--        <b-modal-->
+<!--            v-model="formControlModal"-->
+<!--            id="modal-framework-type"-->
+<!--            title="Add New Control"-->
+<!--            ok-title="Submit"-->
+<!--            size="lg"-->
+<!--            cancel-variant="outline-secondary"-->
+<!--            @hidden="resetModalData"-->
+<!--            @ok="submitControl">-->
+<!--            <b-row>-->
+<!--                <b-col md="6">-->
+<!--                    <b-form-group-->
+<!--                        label="Name"-->
+<!--                    >-->
+<!--                        <b-form-input-->
+<!--                            placeholder="Name"-->
+<!--                            v-model="modalForm.name"-->
+<!--                        />-->
+<!--                        <error :error="modalError.name"/>-->
+<!--                    </b-form-group>-->
+<!--                </b-col>-->
+<!--                <b-col md="6">-->
+<!--                    <b-form-group-->
+<!--                        label="Reference Code"-->
+<!--                    >-->
+<!--                        <b-form-input-->
+<!--                            placeholder="Reference Code"-->
+<!--                            v-model="modalForm.reference_code"-->
+<!--                        />-->
+<!--                        <error :error="modalError.reference_code"/>-->
+<!--                    </b-form-group>-->
+<!--                </b-col>-->
+<!--                <b-col md="12">-->
+<!--                    <b-form-group-->
+<!--                        label="Description"-->
+<!--                    >-->
+<!--                        <b-form-textarea-->
+<!--                            v-model="modalForm.desc"-->
+<!--                        />-->
+<!--                        <error :error="modalError.desc"/>-->
+<!--                    </b-form-group>-->
+<!--                </b-col>-->
+<!--            </b-row>-->
+<!--        </b-modal>-->
+    </div>
+</template>
+
+<script>
+    import Vue from 'vue'
+    import {
+        BCard,
+        BCardText,
+        BLink,
+        BRow,
+        BCol,
+        BFormInput,
+        BFormGroup,
+        BFormCheckboxGroup,
+        BButton,
+        BFormTextarea,
+        BFormSelect
+    } from 'bootstrap-vue'
+    import {form} from "@/libs/mixins";
+    import {get, post} from '@/libs/api'
+    import Error from "@/components/Form/Error";
+    import Ripple from "vue-ripple-directive";
+    import flatPickr from 'vue-flatpickr-component';
+    import XTagInput from "@/components/Form/TagInput";
+    import ToastificationContent from "@core/components/toastification/ToastificationContent";
+
+    export default {
+        name: "DomainForm",
+        props: {
+            formType: String,
+            formId: String
+        },
+        mixins: [form],
+        components: {
+            XTagInput,
+            Error,
+            BCard,
+            BCardText,
+            BLink,
+            BRow,
+            BCol,
+            BFormInput,
+            BFormGroup,
+            BFormCheckboxGroup,
+            BButton,
+            BFormTextarea,
+            BFormSelect,
+            flatPickr
+        },
+        directives: {
+            Ripple
+        },
+        data() {
+            return {
+                show: false,
+                resource: '/mappings?tab=domains',
+                store: '/api/domains',
+                method: 'POST',
+                title: 'Add',
+                message: 'New Domain Added',
+                formControlModal: false,
+                modalForm: {
+                    name: null,
+                    reference_code: null,
+                    desc: null
+                },
+                modalError: {},
+            }
+        },
+
+        created() {
+
+            let urls = {
+                'Add': `/api/domains/create`,
+                'Edit': `/api/domains/${this.formId}/edit`
+            };
+            const url = urls[this.formType];
+
+            get(url).then((res) => {
+                this.setData(res);
+            })
+        },
+
+
+        methods: {
+            setData(res) {
+                Vue.set(this.$data, 'form', res.data.form);
+
+                if (this.formType === 'Edit') {
+                    this.store = `/api/domains/${this.formId}?_method=PUT`;
+                    this.title = 'Edit';
+                    this.message = 'Domains has been updated';
+                }
+                this.show = true
+            },
+            formSubmitted() {
+                this.submit(this.form, (res) => {
+                    this.success()
+                    this.$emit('close');
+                    // this.successfull(res)
+                })
+            },
+            // onControlsUpdate(e) {
+            //     Vue.set(this.$data.form, 'controls', e);
+            // },
+            // onFrameworksUpdate(e) {
+            //     Vue.set(this.$data.form, 'frameworks', e);
+            // },
+            // addNewControl() {
+            //     Vue.set(this.$data, 'formControlModal', true)
+            // },
+            // submitControl(bvModalEvt) {
+            //     bvModalEvt.preventDefault()
+            //     post('/api/controls', this.modalForm).then(res => {
+            //         if (res.data.saved) {
+            //             this.resetModalData()
+            //             this.$toast({
+            //                 component: ToastificationContent,
+            //                 props: {
+            //                     title: 'Success',
+            //                     icon: 'BellIcon',
+            //                     text: 'Control Added',
+            //                     variant: 'success'
+            //                 },
+            //             })
+            //             Vue.set(this.$data, 'formControlModal', false)
+            //         }
+            //     }).catch(error => {
+            //         if (error.response.status === 422) {
+            //             this.modalError = error.response.data.errors
+            //         }
+            //     })
+            // },
+            // resetModalData() {
+            //     this.modalForm = {
+            //         name: null,
+            //         reference_code: null,
+            //         desc: null
+            //     }
+            // },
+            goBack(){
+                this.$router.go(-1);
+            },
+            cancelForm(){
+                this.$emit('cancel');
+            }
+
+        },
+    }
+</script>
+
+<style scoped>
+
+</style>
+<style lang="scss">
+    @import '~@core/scss/vue/libs/vue-flatpicker.scss';
+</style>
